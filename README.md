@@ -7,3 +7,4 @@
 * Scheduled reload of images + metadata
 * Search images by metadata
 * Refactoring
+* Dockerize app
