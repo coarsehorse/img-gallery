@@ -3,7 +3,7 @@
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>
-                %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){blue} %clr(*%-5p*) %clr(${PID:- }){magenta} %clr([%10.10t]) %clr(%-50.50logger{39}){cyan} %clr(-){faint} %m%n%wEx
+                %clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){blue} %clr(* %-5p *) %clr(${PID:- }){magenta} %clr([%10.10t]) %clr(%-50.50logger{39}){cyan} %clr(-){faint} %m%n%wEx
             </Pattern>
         </encoder>
     </appender>

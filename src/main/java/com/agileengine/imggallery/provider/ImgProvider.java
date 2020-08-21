@@ -3,7 +3,10 @@ package com.agileengine.imggallery.provider;
 import com.agileengine.imggallery.props.ImgApiProps;
 import com.agileengine.imggallery.provider.payload.request.AuthRequest;
 import com.agileengine.imggallery.provider.payload.response.AuthResponse;
+import com.agileengine.imggallery.provider.payload.response.ImageByIdResponse;
 import com.agileengine.imggallery.provider.payload.response.ImagesResponse;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.Map;
 import io.vavr.control.Option;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +18,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
 
@@ -35,7 +39,7 @@ public class ImgProvider {
     private final ImgApiProps imgApiProps;
     private final RestTemplate restTemplate;
     
-    private String authToken = "";
+    private String authToken;
     
     /**
      * Executes specified request.
@@ -48,19 +52,30 @@ public class ImgProvider {
     private <T, R> R execute(
         Request<T> request,
         Class<R> respPayload,
+        Option<Map<String, String>> params,
         Integer attemptsLeft
     ) {
         log.info("Executing request {}", request);
         try {
             // Execute request
+            // Construct url using params
             String url = imgApiProps.getUrl() + request.getPath();
+            String urlWithParams = params
+                .map(prms ->
+                    prms.foldLeft(
+                        UriComponentsBuilder.fromHttpUrl(url),
+                        (builder, tuple2) -> builder.queryParam(tuple2._1, tuple2._2)
+                    )
+                )
+                .map(UriComponentsBuilder::toUriString)
+                .getOrElse(url);
     
             HttpEntity<T> reqEntity = new HttpEntity<>(
                 request.getPayload().getOrNull(),
                 generateHeaders()
             );
             ResponseEntity<R> respEntity = restTemplate.exchange(
-                url,
+                urlWithParams,
                 request.getMethod(),
                 reqEntity,
                 respPayload
@@ -69,14 +84,14 @@ public class ImgProvider {
         } catch (HttpClientErrorException.Forbidden fe) {
             if (--attemptsLeft > 0) {
                 log.error("Request has been forbidden, attempts left {}, request {}", attemptsLeft, request);
-                return execute(request, respPayload, attemptsLeft);
+                return execute(request, respPayload, params, attemptsLeft);
             }
             throw fe;
         } catch (HttpClientErrorException.Unauthorized une) {
             log.error("Auth failure");
             this.authToken = updateAuthToken();
             log.info("Auth token was successfully updated");
-            return execute(request, respPayload, attemptsLeft);
+            return execute(request, respPayload, params, attemptsLeft);
         }
     }
     
@@ -91,7 +106,7 @@ public class ImgProvider {
     private String updateAuthToken() {
         AuthRequest payload = new AuthRequest(imgApiProps.getKey());
         Request<AuthRequest> authReq = new Request<>(AUTH_PATH, HttpMethod.POST, Option.of(payload));
-        AuthResponse authResp = execute(authReq, AuthResponse.class, AUTH_ATTEMPTS_NUM);
+        AuthResponse authResp = execute(authReq, AuthResponse.class, Option.none(), AUTH_ATTEMPTS_NUM);
         
         return Option.of(authResp)
             .map(AuthResponse::getToken)
@@ -100,9 +115,19 @@ public class ImgProvider {
     }
     
     public ImagesResponse getImages(Integer pageNum) {
-        
-        Request<AuthRequest> request = new Request<>(IMAGES_PATH, HttpMethod.GET, Option.none());
-        ImagesResponse response = execute(request, ImagesResponse.class, REQ_ATTEMPTS_NUM);
+        Request<?> request = new Request<>(IMAGES_PATH, HttpMethod.GET, Option.none());
+        Map<String, String> params = HashMap.of("page", pageNum.toString());
+        ImagesResponse response = execute(request, ImagesResponse.class, Option.of(params), REQ_ATTEMPTS_NUM);
+        return response;
+    }
+    
+    public ImageByIdResponse getImageById(String id) {
+        Request<?> request = new Request<>(
+            IMAGES_PATH + "/" + id,
+            HttpMethod.GET,
+            Option.none()
+        );
+        ImageByIdResponse response = execute(request, ImageByIdResponse.class, Option.none(), REQ_ATTEMPTS_NUM);
         return response;
     }
     

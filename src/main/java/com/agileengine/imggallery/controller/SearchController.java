@@ -1,6 +1,7 @@
 package com.agileengine.imggallery.controller;
 
 import com.agileengine.imggallery.provider.ImgProvider;
+import com.agileengine.imggallery.provider.payload.response.ImageByIdResponse;
 import com.agileengine.imggallery.provider.payload.response.ImagesResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,15 @@ public class SearchController {
     public List<ImagesResponse.Picture> getImages(
         @PathVariable String searchTerm
     ) {
-        List<ImagesResponse.Picture> pictures = imgProvider.getImages(1).getPictures();
+        List<ImagesResponse.Picture> pictures = imgProvider.getImages(Integer.valueOf(searchTerm)).getPictures();
         return pictures;
+    }
+    
+    @GetMapping("images/s/{searchTerm}")
+    public ImageByIdResponse getImageById(
+        @PathVariable String searchTerm
+    ) {
+        ImageByIdResponse imageById = imgProvider.getImageById(searchTerm);
+        return imageById;
     }
 }
