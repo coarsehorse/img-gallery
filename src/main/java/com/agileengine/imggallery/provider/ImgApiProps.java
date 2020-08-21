@@ -1,4 +1,4 @@
-package com.agileengine.imggallery.props;
+package com.agileengine.imggallery.provider;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

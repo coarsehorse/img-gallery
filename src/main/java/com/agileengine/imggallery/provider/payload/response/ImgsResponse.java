@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImagesResponse {
+public class ImgsResponse {
     
     private List<Picture> pictures;
     private Integer page;

@@ -1,8 +1,8 @@
 package com.agileengine.imggallery.controller;
 
-import com.agileengine.imggallery.provider.ImgProvider;
-import com.agileengine.imggallery.provider.payload.response.ImageByIdResponse;
-import com.agileengine.imggallery.provider.payload.response.ImagesResponse;
+import com.agileengine.imggallery.provider.ImgApiProvider;
+import com.agileengine.imggallery.provider.payload.response.ImgByIdResponse;
+import com.agileengine.imggallery.provider.payload.response.ImgsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,21 +18,21 @@ import java.util.List;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class SearchController {
 
-    private final ImgProvider imgProvider;
+    private final ImgApiProvider imgApiProvider;
     
     @GetMapping("images/{searchTerm}")
-    public List<ImagesResponse.Picture> getImages(
+    public List<ImgsResponse.Picture> getImages(
         @PathVariable String searchTerm
     ) {
-        List<ImagesResponse.Picture> pictures = imgProvider.getImages(Integer.valueOf(searchTerm)).getPictures();
+        List<ImgsResponse.Picture> pictures = imgApiProvider.getImages(Integer.valueOf(searchTerm)).getPictures();
         return pictures;
     }
     
     @GetMapping("images/s/{searchTerm}")
-    public ImageByIdResponse getImageById(
+    public ImgByIdResponse getImageById(
         @PathVariable String searchTerm
     ) {
-        ImageByIdResponse imageById = imgProvider.getImageById(searchTerm);
+        ImgByIdResponse imageById = imgApiProvider.getImageById(searchTerm);
         return imageById;
     }
 }
