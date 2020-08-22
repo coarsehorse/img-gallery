@@ -43,8 +43,12 @@ public class GalleryInitializer implements CommandLineRunner {
     private String DEF_IMG_MIME;
     
     @Override
-    @Scheduled(fixedDelayString = "${app.reload.images.delay}", initialDelayString = "${app.reload.images.delay}")
     public void run(String... args) throws Exception {
+        reloadLocalStorage();
+    }
+    
+    @Scheduled(fixedDelayString = "${app.reload.images.delay}", initialDelayString = "${app.reload.images.delay}")
+    private void reloadLocalStorage() throws Exception {
         log.info("Filling up local storage...");
 
         // Delete old documents first
