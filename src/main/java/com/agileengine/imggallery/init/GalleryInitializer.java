@@ -10,6 +10,7 @@ import io.vavr.collection.Stream;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jmimemagic.Magic;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +19,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
@@ -30,12 +32,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Slf4j
 public class GalleryInitializer implements CommandLineRunner {
-
+    
     private final ImgApiProvider imgProvider;
     private final GridFsTemplate gridFsTemplate;
     
     @Value("${app.init.request.delay}")
     private Long REQ_DELAY;
+    @Value("${app.default.img.mimetype}")
+    private String DEF_IMG_MIME;
     
     @Override
     public void run(String... args) throws Exception {
@@ -79,8 +83,14 @@ public class GalleryInitializer implements CommandLineRunner {
             .map(tuple -> {
                 ImgByIdResponse img = tuple._1;
                 InputStream imgContent = tuple._2.get();
-                ImgMetaDto imgMeta = new ImgMetaDto(img.getAuthor(), img.getCamera(), img.getTags());
-                return gridFsTemplate.store(imgContent, img.getId(), imgMeta);
+                
+                byte[] imgBytes = Try.of(imgContent::readAllBytes)
+                    .getOrElseThrow(() -> new RuntimeException("Cannot read image bytes"));
+                String mimeType = Try.of(() -> Magic.getMagicMatch(imgBytes).getMimeType())
+                    .getOrElse(DEF_IMG_MIME);
+                ImgMetaDto imgMeta = new ImgMetaDto(img.getAuthor(), img.getCamera(), img.getTags(), mimeType);
+                
+                return gridFsTemplate.store(new ByteArrayInputStream(imgBytes), img.getId(), imgMeta);
             })
             .collect(Collectors.toList());
             

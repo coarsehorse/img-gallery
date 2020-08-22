@@ -4,16 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Created by coarse_horse on 21/08/2020
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ImgMetaDto {
+public class LocalImagesDto {
     
-    private String author;
-    private String camera;
-    private String tags;
-    private String mimeType;
+    private List<String> foundImages;
 }
