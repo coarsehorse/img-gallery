@@ -1,10 +1,10 @@
 # Img Gallery App
 
 ### ToDo list:
-* Http service with auto auth for AgileEngine API
-* GridFS as image storage
-* Load images + metadata on startup
-* Scheduled reload of images + metadata
-* Search images by metadata
-* Refactoring
+* ~~AgileEngine Image API provider with auto auth~~
+* ~~GridFS as image storage~~
+* ~~Load images + metadata on startup~~
+* ~~Scheduled reload of images + metadata~~
+* ~~Search images by metadata~~
 * Dockerize app
+* Refactoring

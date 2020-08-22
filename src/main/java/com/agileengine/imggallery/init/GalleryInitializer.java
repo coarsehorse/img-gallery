@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
@@ -42,17 +43,18 @@ public class GalleryInitializer implements CommandLineRunner {
     private String DEF_IMG_MIME;
     
     @Override
+    @Scheduled(fixedDelayString = "${app.reload.images.delay}", initialDelayString = "${app.reload.images.delay}")
     public void run(String... args) throws Exception {
         log.info("Filling up local storage...");
-        
+
         // Delete old documents first
         gridFsTemplate.delete(new Query());
-        
+
         // Get first page of images to determine boundaries
         ImgsResponse firstPageImgs = imgProvider.getImages(0);
         Stream<String> firstPagePicIds = Stream.ofAll(firstPageImgs.getPictures())
             .map(ImgsResponse.Picture::getId);
-    
+
         // Download all full sized images and upload to GridFS storage with meta
         List<ObjectId> objectIds = Stream.range(1, firstPageImgs.getPageCount() + 1)
             .map(imgProvider::getImages)
@@ -83,17 +85,17 @@ public class GalleryInitializer implements CommandLineRunner {
             .map(tuple -> {
                 ImgByIdResponse img = tuple._1;
                 InputStream imgContent = tuple._2.get();
-                
+
                 byte[] imgBytes = Try.of(imgContent::readAllBytes)
                     .getOrElseThrow(() -> new RuntimeException("Cannot read image bytes"));
                 String mimeType = Try.of(() -> Magic.getMagicMatch(imgBytes).getMimeType())
                     .getOrElse(DEF_IMG_MIME);
                 ImgMetaDto imgMeta = new ImgMetaDto(img.getAuthor(), img.getCamera(), img.getTags(), mimeType);
-                
+
                 return gridFsTemplate.store(new ByteArrayInputStream(imgBytes), img.getId(), imgMeta);
             })
             .collect(Collectors.toList());
-            
+
         log.info("Successfully uploaded {} images", objectIds.size());
     }
 }

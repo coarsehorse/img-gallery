@@ -1,7 +1,7 @@
-### Maven
+# Maven
 .mvn
 mvnw*
 
-### IntelliJ IDEA
+# IntelliJ IDEA
 .idea
 *.iml
